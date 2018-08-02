@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="score" >
+
+    <insert id="insertScore">
+        INSERT INTO score (uid, nid, score, content, time, like_num) VALUES (#{uid}, #{nid}, #{score}, #{content}, #{time}, 0)
+    </insert>
+    
+    <select id="getScore" resultMap="ScoreResultMap">
+        SELECT  score.uid, score.nid, score.score FROM score WHERE nid = #{nid} AND uid = #{uid}
+    </select>
+    
+    <select id="getScoreByUid" resultType="Integer">
+        SELECT score.score FROM score WHERE nid = #{nid} and uid = #{uid}
+    </select>
+    
+    <select id="getScoresByUid" resultType="HashMap">
+        SELECT score.score, score.time, score.content, score.like_num,
+              novel.nid, novel.title, novel.cover, novel.recent_chapter_id, novel.update_time, novel.state, novel.introduction,
+              user.uid, user.username, user.portrait, label.lid, label.label_name,
+              chapter.cid, chapter.chapter_name
+              FROM score LEFT JOIN novel ON score.nid = novel.nid
+              LEFT JOIN user ON novel.uid = user.uid
+              LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+              LEFT JOIN label ON novel.lid = label.lid
+              WHERE score.uid = #{uid}
+    </select>
+
+    <select id="getScoreByNid" resultType="HashMap">
+        SELECT score.score, score.content, score.time, score.like_num,
+        user.uid, user.username, user.portrait FROM score
+        LEFT JOIN user ON score.uid = user.uid
+        WHERE score.nid = #{nid}
+        ORDER BY time DESC
+    </select>
+
+    <select id="getScoreNumByNid" resultType="INTEGER">
+        SELECT count(*) FROM score WHERE nid = #{nid}
+    </select>
+    
+    <select id="getAvgScoreByNid" resultType="Double">
+        SELECT CONVERT(AVG(score), DECIMAL(2, 1)) AS avg FROM score WHERE nid = #{nid}
+    </select>
+    
+    <update id="updateScore">
+        UPDATE score SET score = #{score}, content = #{content}, time = #{time} WHERE uid = #{uid} AND nid = #{nid}
+    </update>
+    
+    <resultMap id="ScoreResultMap" type="ScoreEntity">
+        <id column="uid" property="uid" jdbcType="INTEGER"/>
+        <id column="nid" property="nid" jdbcType="BIGINT"/>
+        <result column="score" property="score" jdbcType="INTEGER"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="time" property="time" jdbcType="BIGINT"/>
+        <result column="like_num" property="likeNum" jdbcType="INTEGER"/>
+    </resultMap>
+</mapper>

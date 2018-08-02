@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="bookCase">
+
+    <insert id="insertBookCase" parameterType="BookCaseEntity" useGeneratedKeys="true">
+        INSERT INTO bookcase (uid, type) VALUES (#{uid}, #{type})
+    </insert>
+
+    <insert id="insertNovelToBookcase">
+        INSERT INTO bookcase_user (bid, nid, level) VALUES (#{bid}, #{nid}, 0)
+    </insert>
+
+    <select id="getBookcase" resultMap="bookCaseResultMap">
+        SELECT * FROM bookcase WHERE uid = #{uid} AND type = #{type}
+    </select>
+
+    <select id="getNovelCount" resultType="HashMap">
+        SELECT count(*) AS num FROM bookcase_user WHERE bid = #{bid}
+    </select>
+    
+    <select id="isNovelInBookcase" resultMap="bookCaseResultMap">
+        SELECT * FROM bookcase_user WHERE bid = #{bid} AND nid = #{nid}
+    </select>
+
+    <select id="getAllBookcase" resultType="HashMap">
+        SELECT bookcase.type, count(type) AS num FROM bookcase LEFT JOIN bookcase_user ON bookcase.bid = bookcase_user.bid WHERE uid = #{uid} GROUP BY type
+    </select>
+
+    <select id="getBookNumByUid" resultType="Integer">
+        SELECT count(*) AS num FROM bookcase RIGHT JOIN bookcase_user ON bookcase.bid = bookcase_user.bid WHERE uid = #{uid}
+    </select>
+    
+    <select id="getTopNum" resultType="HashMap">
+        SELECT count(*) AS num FROM bookcase_user WHERE bid = #{bid} AND level > 0
+    </select>
+    
+    <select id="getDefaultBookcase" resultMap="bookCaseResultMap">
+        SELECT * FROM bookcase WHERE uid = #{uid} AND type = '默认分组'
+    </select>
+
+    <delete id="deleteNovelInBookCase">
+        DELETE FROM bookcase_user WHERE nid = #{nid} AND bid = #{bid}
+    </delete>
+    
+    <delete id="deleteBookcase">
+        DELETE FROM bookcase WHERE bid = #{bid}
+    </delete>
+
+    <update id="updateType">
+        UPDATE bookcase_user SET bid = #{bid} WHERE nid = #{nid}
+    </update>
+
+    <update id="updateLevel">
+        UPDATE bookcase_user SET level = #{level} WHERE nid = #{nid} AND bid = #{bid}
+    </update>
+    
+    <update id="updateLevelDown">
+        UPDATE bookcase_user SET level = 0 WHERE nid = #{nid} AND bid = #{bid}
+    </update>
+
+    <resultMap id="bookCaseResultMap" type="BookCaseEntity" >
+        <id column="bid" property="bid" jdbcType="BIGINT"/>
+        <result column="uid" property="uid" jdbcType="INTEGER"/>
+        <result column="type" property="type" jdbcType="VARCHAR" />
+    </resultMap>
+
+</mapper>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="news">
+
+    <select id="getNews" resultMap="newsResultMap">
+        select * from new where flag = #{flag}
+    </select>
+
+    <resultMap id="newsResultMap" type="NewsEntity" >
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR" />
+        <result column="time" property="time" jdbcType="BIGINT"/>
+        <result column="flag" property="flag" jdbcType="INTEGER"/>
+    </resultMap>
+
+</mapper>

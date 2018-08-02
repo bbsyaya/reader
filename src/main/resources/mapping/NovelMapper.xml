@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="novel" >
+    
+    <insert id="insertNovel" parameterType="NovelEntity" useGeneratedKeys="true" keyProperty="nid">
+        INSERT INTO novel (title, uid, lid, introduction, info, score, state, create_time, update_time, word_num, click_num, recommend_num, chapter_num, cover, recent_chapter_id, allow)
+        VALUES (#{title}, #{uid}, #{lid}, #{introduction}, #{info}, #{score}, #{state}, #{createTime}, #{updateTime}, #{wordNum}, #{clickNum}, #{recommendNum}, #{chapterNum}, #{cover}, #{recentChapterId}, #{allow})
+    </insert>
+
+    <select id="getNovelByNid" resultType="HashMap">
+        SELECT novel.nid, novel.title, novel.introduction, novel.info, novel.score, novel.collect_num, novel.state, novel.create_time, novel.update_time, novel.word_num, novel.click_num, novel.recommend_num, novel.chapter_num, novel.cover, novel.recent_chapter_id, novel.level, user.username, user.uid, label.*, chapter.cid, chapter.chapter_name FROM novel
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE novel.nid = #{nid}
+    </select>
+
+    <select id="getNovelByUid" resultType="HashMap">
+        SELECT novel.nid, novel.title, novel.introduction, novel.info, novel.score, novel.state, novel.create_time, novel.update_time, novel.word_num, novel.click_num, novel.recommend_num, novel.chapter_num, novel.cover, novel.recent_chapter_id, novel.level, user.username, user.uid, label.*, chapter.cid, chapter.chapter_name FROM novel
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE novel.uid = #{uid}
+    </select>
+    
+    <select id="getTitleByNid" resultType="HashMap">
+        SELECT novel.nid, novel.title, novel.cover FROM novel WHERE nid = #{nid}
+    </select>
+
+    <select id="getNovelByBookName" resultType="HashMap">
+        SELECT novel.nid, novel.uid, novel.lid, novel.title, novel.state, novel.introduction, novel.word_num, novel.recommend_num, novel.cover, novel.click_num, user.username, label.label_name, chapter.chapter_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+            INNER JOIN user ON novel.uid = user.uid
+        left JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE novel.title LIKE concat('%', #{bookName}, '%')
+    </select>
+
+    <select id="getAllNovel" resultType="HashMap" parameterType="HashMap">
+        SELECT novel.nid, novel.uid, novel.lid, novel.title, novel.state, novel.introduction, novel.word_num, novel.cover, user.username, label.label_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        <where>
+            <if test="lid != 0">
+              label.lid = #{lid}
+            </if>
+            <if test="state != -1">
+              AND novel.state = #{state}
+            </if>
+        </where>
+        <if test="active == 0">
+            ORDER BY click_num DESC
+        </if>
+        <if test="active == 1">
+            ORDER BY update_time desc
+        </if>
+        <if test="active == 2">
+            ORDER BY collect_num desc
+        </if>
+        <if test="active == 3">
+            ORDER BY word_num desc
+        </if>
+    </select>
+    
+    <select id="getNovelByTitle" resultMap="novelResultMap">
+        SELECT * FROM novel WHERE title= #{title}
+    </select>
+
+    <select id="getNovelByTitleWidly" resultType="HashMap">
+        SELECT novel.*, user.username, chapter.chapter_name
+        FROM novel INNER JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE novel.title LIKE concat('%', #{key}, '%') OR novel.introduction LIKE concat('%', #{key}, '%')
+        <if test="active == 1">
+            ORDER BY update_time desc
+        </if>
+        <if test="active == 2">
+            ORDER BY collect_num desc
+        </if>
+        <if test="active == 3">
+            ORDER BY word_num desc
+        </if>
+    </select>
+
+    <select id="getNovelByAuthor" resultType="HashMap">
+        SELECT novel.*, user.username, chapter.chapter_name
+        FROM novel RIGHT JOIN user ON novel.uid = user.uid
+            left JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE username = #{authorName}
+    </select>
+
+    <select id="getNovelByLidL5" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name, chapter.chapter_name
+          FROM novel RIGHT JOIN label ON novel.lid = label.lid
+              INNER JOIN user ON novel.uid = user.uid
+              left JOIN chapter ON novel.recent_chapter_id = chapter.cid
+          WHERE label.lid = #{lid}
+        ORDER BY novel.click_num DESC LIMIT 5
+    </select>
+
+    <select id="getAllNovelByLid" resultType="HashMap">
+        SELECT novel.nid, novel.uid, novel.lid, novel.title, novel.info, novel.cover, novel.word_num, user.username, label.label_name
+        FROM novel RIGHT JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        WHERE label.lid = #{lid}
+        ORDER BY novel.click_num DESC
+    </select>
+
+    <select id="getNovelByLidRecent" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name, chapter.chapter_name
+        FROM novel RIGHT JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY novel.update_time DESC
+        LIMIT 30
+    </select>
+
+    <select id="getNovelByLidScore" resultType="HashMap">
+        SELECT novel.*, user.username
+        FROM novel RIGHT JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        WHERE label.lid = #{lid}
+        ORDER BY novel.score DESC
+        LIMIT 30
+    </select>
+
+    <select id="getNovelByRecentL23" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name, chapter.chapter_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+            INNER JOIN user ON novel.uid = user.uid
+            LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY update_time DESC LIMIT 23
+    </select>
+    
+    <select id="getNovelByScoreL10" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name, chapter.chapter_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+            INNER JOIN user ON novel.uid = user.uid
+            LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY score DESC LIMIT 10
+    </select>
+
+    <select id="getNovelByScoreL17" resultType="HashMap">
+        SELECT novel.nid, novel.title, user.uid, user.username, label.lid, label.label_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+            INNER JOIN user ON novel.uid = user.uid
+        ORDER BY score DESC
+        LIMIT 17
+    </select>
+
+    <select id="getNovelByNewL17" resultType="HashMap">
+        SELECT novel.nid, novel.title, user.uid, user.username, label.lid, label.label_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        ORDER BY novel.update_time DESC
+        LIMIT 17
+    </select>
+
+    <select id="getScoreNovel" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name, chapter.chapter_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY score DESC
+    </select>
+
+    <select id="getScoreNovelByLid" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name, chapter.chapter_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY score DESC
+    </select>
+    
+    <select id="getNovelCoverByScore" resultType="String">
+        SELECT cover FROM novel
+        ORDER BY score DESC LIMIT 4;
+    </select>
+
+    <select id="getNovelByNewL10" resultType="HashMap">
+        SELECT novel.*, label.label_name, user.username
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+            INNER JOIN user ON novel.uid = user.uid
+        ORDER BY create_time DESC LIMIT 10
+    </select>
+
+    <select id="getNovelByStateL10" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name, chapter.chapter_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+            INNER JOIN user ON novel.uid = user.uid
+            LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE state = #{state}
+        ORDER BY novel.score DESC LIMIT 10
+    </select>
+
+    <select id="getNovelByClickL10" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+            INNER JOIN user ON novel.uid = user.uid
+        ORDER BY click_num DESC
+        LIMIT 10
+    </select>
+
+    <select id="getNovelByRecommendL10" resultType="HashMap">
+        SELECT novel.*, user.username, label.label_name
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        ORDER BY recommend_num DESC LIMIT 10
+    </select>
+
+    <select id="getNovelInBookCase" resultType="HashMap">
+        SELECT novel.nid, novel.title AS name, novel.recent_chapter_id AS cid, novel.update_time AS time, label.lid, label.label_name AS label, chapter.chapter_name AS chapter, user.username AS author, user.uid, bookcase.type, bookcase_user.level AS level
+        FROM novel
+            LEFT JOIN bookcase_user ON novel.nid = bookcase_user.nid
+            LEFT JOIN bookcase ON bookcase.bid = bookcase_user.bid
+            LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+            LEFT JOIN user ON novel.uid = user.uid
+            LEFT JOIN label ON novel.lid = label.lid
+        WHERE bookcase.uid = #{uid} AND bookcase.type = #{type}
+        ORDER BY bookcase_user.level DESC
+    </select>
+    
+    <select id="getInBookcaseByTitle" resultType="HashMap">
+        SELECT novel.nid, novel.title AS name, novel.recent_chapter_id AS cid, novel.update_time AS time, label.lid, label.label_name AS label, chapter.chapter_name AS chapter, user.username AS author, user.uid, bookcase.type, bookcase_user.level AS level
+        FROM novel
+            LEFT JOIN bookcase_user ON novel.nid = bookcase_user.nid
+            LEFT JOIN bookcase ON bookcase.bid = bookcase_user.bid
+            LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+            LEFT JOIN user ON novel.uid = user.uid
+            LEFT JOIN label ON novel.lid = label.lid
+        WHERE bookcase.uid = #{uid} AND novel.title LIKE concat('%', #{title}, '%')
+        ORDER BY bookcase_user.level DESC
+    </select>
+
+    <select id="getNovelByRecord" resultType="HashMap">
+        SELECT novel.nid, novel.title AS name, novel.recent_chapter_id AS cid, novel.update_time AS time, label.lid, label.label_name AS label, chapter.chapter_name AS chapter, user.username AS author, user.uid
+        FROM novel
+            LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+            LEFT JOIN user ON novel.uid = user.uid
+            LEFT JOIN label ON novel.lid = label.lid
+            RIGHT JOIN record ON  record.nid = novel.nid
+        WHERE record.nid = #{nid} AND record.uid = #{uid}
+    </select>
+
+    <select id="getNotAllowedNovel" resultType="HashMap">
+        SELECT novel.*, user.* FROM novel
+        INNER JOIN user ON novel.uid = user.uid
+        WHERE novel.allow = 0;
+    </select>
+
+    <select id="getEditNovel" resultMap="novelResultMap">
+        SELECT * FROM novel WHERE level = 3 LIMIT 15
+    </select>
+
+    <select id="getRecommendNovel" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY recommend_num DESC
+    </select>
+
+    <select id="getRecommendNovelL10" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY recommend_num DESC LIMIT 10
+    </select>
+
+    <select id="getRecommendNovelL15" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY recommend_num DESC LIMIT 15
+    </select>
+
+    <select id="getRecommendNovelByLid" resultType="HashMap" parameterType = "HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY recommend_num DESC
+    </select>
+
+    <select id="getRecommendNovelByLidL10" resultType="HashMap" parameterType = "HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY recommend_num DESC LIMIT 10
+    </select>
+
+    <select id="getRecommendNovelByLidL15" resultType="HashMap" parameterType = "HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY recommend_num DESC LIMIT 15
+    </select>
+
+    <select id="getNewNovel" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY novel.create_time DESC
+    </select>
+
+    <select id="getNewNovelL10" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY novel.create_time DESC LIMIT 10
+    </select>
+
+    <select id="getNewNovelL23" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY novel.create_time DESC LIMIT 23
+    </select>
+
+    <select id="getNewNovelByLid" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY novel.create_time DESC
+    </select>
+
+    <select id="getNewNovelByLidL10" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid,user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY novel.create_time DESC LIMIT 10
+    </select>
+
+    <select id="getNewNovelByLidL23" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY novel.create_time DESC LIMIT 23
+    </select>
+
+    <select id="getPopularNovel" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY score DESC
+    </select>
+
+    <select id="getPopularNovelL10" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY score DESC LIMIT 10
+    </select>
+
+    <select id="getPopularNovelByLid" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY score DESC
+    </select>
+
+    <select id="getPopularNovelByLidL10" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, novel.score, user.uid, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY score DESC LIMIT 10
+    </select>
+
+    <select id="getUpdateNovel" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        ORDER BY update_time DESC
+    </select>
+
+    <select id="getUpdateNovelByLid" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name,  novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY update_time DESC
+    </select>
+
+    <select id="getFinishNovel" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.word_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name,  chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE state = 1
+        <if test="active == 0">
+            ORDER BY click_num DESC
+        </if>
+        <if test="active == 1">
+            ORDER BY update_time desc
+        </if>
+        <if test="active == 2">
+            ORDER BY collect_num desc
+        </if>
+        <if test="active == 3">
+            ORDER BY word_num desc
+        </if>
+    </select>
+
+    <select id="getFinishNovelL10" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.word_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name,  chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE state = 1
+        ORDER BY click_num DESC LIMIT 10
+    </select>
+
+    <select id="getFinishNovelByLid" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.word_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid} AND state = 1
+        <if test="active == 0">
+            ORDER BY click_num DESC
+        </if>
+        <if test="active == 1">
+            ORDER BY update_time desc
+        </if>
+        <if test="active == 2">
+            ORDER BY collect_num desc
+        </if>
+        <if test="active == 3">
+            ORDER BY word_num desc
+        </if>
+    </select>
+
+    <select id="getFinishNovelByLidL10" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid} AND state = 1
+        ORDER BY click_num DESC LIMIT 10
+    </select>
+
+    <select id="getClickNovel" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state
+        FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY click_num DESC
+    </select>
+
+    <select id="getClickNovelL10" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state
+        FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY click_num DESC LIMIT 10
+    </select>
+
+    <select id="getClickNovelByLid" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state
+        FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY click_num DESC
+    </select>
+
+    <select id="getClickNovelByLidL10" resultType="HashMap">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state
+        FROM novel
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY click_num DESC LIMIT 10
+    </select>
+
+    <select id="getCollectNovel" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY collect_num DESC
+    </select>
+
+    <select id="getCollectNovelL10" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        ORDER BY collect_num DESC LIMIT 10
+    </select>
+
+    <select id="getCollectNovelByLid" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY collect_num DESC
+    </select>
+
+    <select id="getCollectNovelByLidL10" resultType="HashMap" parameterType = "Integer">
+        SELECT novel.nid, novel.lid, novel.title, novel.info, novel.introduction, novel.click_num, novel.cover, novel.recommend_num, user.uid, novel.score, user.username, label.label_name, chapter.chapter_name, novel.recent_chapter_id, novel.update_time, novel.state
+        FROM novel INNER JOIN label ON novel.lid = label.lid
+        INNER JOIN user ON novel.uid = user.uid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE label.lid = #{lid}
+        ORDER BY collect_num DESC LIMIT 10
+    </select>
+
+    <update id="addClickNum">
+        UPDATE novel SET click_num = click_num + 1 WHERE nid = #{nid}
+    </update>
+
+    <update id="addChapterNum">
+        update novel set chapter_num = chapter_num + 1 where nid = #{nid}
+    </update>
+    
+    <update id="updateScore">
+        UPDATE novel SET score = #{score} WHERE nid = #{nid}
+    </update>
+
+    <resultMap id="novelResultMap" type="NovelEntity" >
+        <id column="nid" property="nid" jdbcType="BIGINT" />
+        <result column="title" property="title" jdbcType="VARCHAR" />
+        <result column="uid" property="uid" jdbcType="INTEGER" />
+        <result column="lid" property="lid" jdbcType="INTEGER" />
+        <result column="introduction" property="introduction" jdbcType="VARCHAR" />
+        <result column="info" property="info" jdbcType="VARCHAR" />
+        <result column="score" property="score" jdbcType="BIGINT" />
+        <result column="create_time" property="createTime" jdbcType="BIGINT" />
+        <result column="cover" property="cover" jdbcType="VARCHAR" />
+        <result column="update_time" property="updateTime" jdbcType="BIGINT" />
+        <result column="word_num" property="wordNum" jdbcType="INTEGER" />
+        <result column="click_num" property="clickNum" jdbcType="INTEGER" />
+        <result column="collect_num" property="collectNum" jdbcType="INTEGER" />
+        <result column="recommend_num" property="recommendNum" jdbcType="INTEGER" />
+        <result column="chapter_num" property="chapterNum" jdbcType="INTEGER" />
+        <result column="recent_chapter_id" property="recentChapterId" jdbcType="BIGINT" />
+        <result column="level" property="level" jdbcType="INTEGER" />
+    </resultMap>
+</mapper>

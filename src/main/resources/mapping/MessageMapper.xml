@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="message" >
+
+    <insert id="insertMessage" keyProperty="mid" useGeneratedKeys="true">
+        INSERT INTO message (type, title, content, time, is_read, from_id, to_id)
+        VALUES (#{type}, #{title}, #{content}, #{time}, #{isRead}, #{fromId}, #{toId})
+    </insert>
+
+    <select id="getMessageByToId" resultType="HashMap">
+        SELECT message.mid, message.time, message.is_read, message.title, user.uid, user.username, user.portrait
+        FROM message
+            LEFT JOIN user ON message.from_id = user.uid
+        WHERE to_id = #{uid} AND type = #{type}
+    </select>
+
+    <select id="getMessageByMid" resultMap="messageResultMap">
+        SELECT message.content FROM message WHERE mid = #{mid}
+    </select>
+    
+    <select id="getUnReadMessageNum" resultType="INTEGER">
+        SELECT count(*) FROM message WHERE to_id = #{uid} AND is_read = 0;
+    </select>
+
+    <delete id="deleteMessageByMid">
+        DELETE FROM message WHERE mid = #{mid}
+    </delete>
+
+    <update id="updateRead">
+        UPDATE message SET is_read = 1 WHERE mid = #{mid}
+    </update>
+
+    <resultMap id="messageResultMap" type="MessageEntity">
+        <id column="mid" property="mid" jdbcType="BIGINT"/>
+        <result column="type" property="type" jdbcType="INTEGER"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="time" property="time" jdbcType="BIGINT"/>
+        <result column="is_read" property="isRead" jdbcType="INTEGER"/>
+        <result column="from_id" property="fromId" jdbcType="INTEGER"/>
+        <result column="to_id" property="toId" jdbcType="INTEGER"/>
+    </resultMap>
+</mapper>

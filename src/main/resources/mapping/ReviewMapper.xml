@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="review" >
+
+    <insert id="insertReview" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review (rid, nid, content, time, like_num) VALUES (#{rid}, #{nid}, #{content}, #{time}, #{likeNum})
+    </insert>
+    
+    <select id="getReviewByRid" resultType="HashMap">
+        SELECT novel.nid, novel.title, novel.info, novel.cover, novel.recent_chapter_id, novel.state, novel.update_time,
+            author.aid, author.author_name, label.lid, label.label_name, chapter.cid, chapter.chapter_name,
+            review.content, review.time, review.like_num
+        FROM review LEFT JOIN novel ON review.nid = novel.nid
+        LEFT JOIN author ON novel.aid = author.aid
+        LEFT JOIN label ON novel.lid = label.lid
+        LEFT JOIN chapter ON novel.recent_chapter_id = chapter.cid
+        WHERE rid = #{rid}
+    </select>
+
+    <delete id="deleteReview">
+        DELETE FROM review WHERE id = #{id}
+    </delete>
+
+    <resultMap id="reviewResultMap" type="ReviewEntity">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="rid" property="rid" jdbcType="INTEGER"/>
+        <result column="nid" property="nid" jdbcType="BIGINT"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="time" property="time" jdbcType="BIGINT"/>
+        <result column="like_num" property="likeNum" jdbcType="INTEGER"/>
+    </resultMap>
+
+</mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--<settings>
+        &lt;!&ndash; 打印查询语句 &ndash;&gt;
+        <setting name="logImpl" value="STDOUT_LOGGING" />
+    </settings>-->
+    <typeAliases>
+        <package name="com.riyeyuedu.entity"/>
+    </typeAliases>
+
+    <plugins>
+        <!-- com.github.pagehelper为PageHelper类所在包名 -->
+        <plugin interceptor="com.github.pagehelper.PageInterceptor">
+            <!-- 使用下面的方式配置参数，后面会有所有的参数介绍 -->
+            <property name="helperDialect" value="mysql"/>
+            <property name="offsetAsPageNum" value="true"/>
+            <property name="rowBoundsWithCount" value="true"/>
+        </plugin>
+    </plugins>
+
+    <mappers>
+        <mapper resource="mapping/NovelMapper.xml"/>
+        <mapper resource="mapping/ChapterMapper.xml"/>
+        <mapper resource="mapping/BookCaseMapper.xml"/>
+        <mapper resource="mapping/RecordMapper.xml"/>
+        <mapper resource="mapping/PostMapper.xml"/>
+        <mapper resource="mapping/ReplyMapper.xml"/>
+        <mapper resource="mapping/ScoreMapper.xml"/>
+        <mapper resource="mapping/MessageMapper.xml"/>
+        <mapper resource="mapping/ReviewMapper.xml"/>
+        <mapper resource="mapping/UsersMapper.xml"/>
+        <mapper resource="mapping/NewsMapper.xml"/>
+    </mappers>
+</configuration>

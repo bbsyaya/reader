@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="post" >
+
+    <insert id="insertPost" parameterType="PostEntity" useGeneratedKeys="true" keyProperty="pid">
+        INSERT INTO post (nid, uid, like_num, theme, content, update_time, level, reply_num)
+        VALUES (#{nid}, #{uid}, 0, #{theme}, #{content}, #{updateTime}, 0, 0)
+    </insert>
+
+    <insert id="insertAttitude">
+        INSERT INTO attitude (uid, pid, state) VALUES (#{uid}, #{pid}, #{state})
+    </insert>
+    
+    <select id="isAttitude" resultType="Integer">
+        SELECT count(*) FROM attitude WHERE uid = #{uid} AND pid = #{pid}
+    </select>
+
+    <select id="selectPostByNid" resultType="HashMap">
+        SELECT user.uid, user.username, user.portrait, post.pid, post.like_num, post.theme, post.content, post.update_time, post.update_time, post.reply_num, attitude.state FROM post
+        LEFT JOIN user ON post.uid = user.uid
+        LEFT JOIN novel ON post.nid = novel.nid
+            LEFT JOIN attitude ON post.pid = attitude.pid
+        WHERE post.nid = #{nid}
+    </select>
+
+    <select id="getPostByPid" resultType="HashMap">
+        SELECT user.uid, user.username, user.portrait, post.like_num, post.theme, post.content, post.update_time, post.reply_num FROM post
+            LEFT JOIN user ON post.uid = user.uid
+        WHERE pid = #{pid}
+    </select>
+
+    <select id="getPostNumByNid" resultType="Integer">
+        SELECT count(*) FROM post WHERE nid = #{nid}
+    </select>
+
+    <update id="addCommentNum">
+        UPDATE post SET reply_num = post.reply_num + 1 WHERE pid = #{pid}
+    </update>
+    
+    <update id="reduceCommentNum">
+        UPDATE post SET reply_num = post.reply_num - 1 WHERE pid = #{pid}
+    </update>
+    
+    <update id="addLikeNum">
+        UPDATE post SET like_num = like_num + 1 WHERE pid = #{pid}
+    </update>
+    
+    <update id="reduceLikeNum">
+        UPDATE post SET like_num = like_num - 1 WHERE pid = #{pid}
+    </update>
+
+    <update id="updateAttitude">
+        UPDATE attitude SET state = #{state} WHERE uid = #{uid} AND pid = #{pid}
+    </update>
+    
+    <delete id="deletePost">
+        DELETE FROM post WHERE pid = #{pid}
+    </delete>
+
+    <resultMap id="postResultMap" type="PostEntity" >
+        <id column="pid" property="pid" jdbcType="BIGINT"/>
+        <result column="nid" property="nid" jdbcType="BIGINT"/>
+        <result column="uid" property="uid" jdbcType="INTEGER"/>
+        <result column="theme" property="theme" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="like_num" property="likeNum" jdbcType="INTEGER"/>
+        <result column="update_time" property="updateTime" jdbcType="VARCHAR"/>
+        <result column="level" property="level" jdbcType="INTEGER"/>
+        <result column="reply_num" property="replyNum" jdbcType="INTEGER"/>
+    </resultMap>
+</mapper>

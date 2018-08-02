@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="chapter" >
+
+    <insert id="insertChapter" parameterType="ChapterEntity" useGeneratedKeys="true" keyProperty="cid">
+        INSERT INTO chapter (nid, chapter_name, content, create_time, word_num, allow)
+        VALUES (#{nid}, #{chapterName}, #{content}, #{createTime}, #{wordNum}, #{allow})
+    </insert>
+    
+    <insert id="insertDraft" parameterType="ChapterEntity" useGeneratedKeys="true" keyProperty="cid">
+        INSERT INTO chapter (nid, chapter_name, draft, create_time, word_num, allow, is_draft)
+        VALUES (#{nid}, #{chapterName}, #{draft}, #{createTime}, #{wordNum}, #{allow}, #{isDraft})
+    </insert>
+
+    <select id="getDirectoryByNid" resultMap="chapterResultMap">
+        SELECT chapter.chapter_name, chapter.cid FROM chapter WHERE nid = #{nid} and allow = 1
+    </select>
+
+    <select id="getChapterByCid" resultType="HashMap">
+        SELECT chapter.chapter_name, chapter.content, chapter.create_time, chapter.word_num,
+            novel.title, novel.nid,
+            user.username, user.uid,
+            label.label_name, label.lid
+        FROM novel RIGHT JOIN chapter ON chapter.nid = novel.nid
+        LEFT JOIN user ON novel.uid = user.uid
+        LEFT JOIN label ON novel.lid = label.lid
+        WHERE chapter.cid = #{cid}
+    </select>
+
+    <select id="getDraftByCid" resultMap="chapterResultMap">
+        select chapter_name, draft, cid from chapter where cid = #{cid}
+    </select>
+
+    <select id="getFirstChapter" resultMap="chapterResultMap">
+        SELECT cid FROM chapter WHERE nid = #{nid} and allow = 1 ORDER BY cid ASC LIMIT 1
+    </select>
+
+    <select id="getLastChapter" resultMap="chapterResultMap">
+        SELECT cid FROM chapter WHERE nid = #{nid} and allow = 1 ORDER BY cid DESC LIMIT 1
+    </select>
+    
+    <select id="getNewChapter" resultMap="chapterResultMap">
+        SELECT cid, nid, chapter_name, content, create_time, word_num FROM chapter WHERE nid = #{nid} and allow = 0
+        ORDER BY cid DESC
+        LIMIT 1
+    </select>
+
+    <select id="getNotAllowedChapter" resultMap="chapterResultMap">
+        SELECT cid, nid, chapter_name, content, create_time, word_num FROM chapter WHERE allow = 0 AND nid = #{nid};
+    </select>
+
+    <select id="getChapterInfo" resultMap="chapterResultMap">
+        select cid, chapter_name, create_time, word_num from chapter where nid = #{nid} and is_draft = 1
+    </select>
+
+    <update id="chapterAllowed">
+        UPDATE chapter SET allow = 1 WHERE nid = #{nid} AND cid = #{cid}
+    </update>
+
+    <update id="updateDraft">
+        update chapter set draft = #{draft} where cid = #{cid}
+    </update>
+
+    <update id="updateContent">
+        update chapter set content = #{content}, allow = 1 where cid = #{cid}
+    </update>
+
+    <update id="deleteDraft">
+        update chapter set is_draft = 0 where cid = #{cid}
+    </update>
+
+    <resultMap id="chapterResultMap" type="ChapterEntity" >
+        <id column="cid" property="cid" jdbcType="BIGINT" />
+        <result column="nid" property="nid" jdbcType="BIGINT" />
+        <result column="chapter_name" property="chapterName" jdbcType="VARCHAR" />
+        <result column="draft" property="draft" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="BIGINT" />
+        <result column="words_num" property="wordsNum" jdbcType="INTEGER" />
+        <result column="allow" property="allow" jdbcType="INTEGER" />
+        <result column="is_draft" property="isDraft" jdbcType="INTEGER"/>
+    </resultMap>
+
+</mapper>

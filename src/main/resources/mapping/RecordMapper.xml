@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="record" >
+
+    <insert id="insertRecord" parameterType="RecordEntity">
+        INSERT INTO record (uid, cid, nid, time) VALUES (#{uid}, #{cid}, #{nid}, #{time})
+    </insert>
+    
+    <select id="getRecord" resultMap="recordResultMap">
+        SELECT * FROM record WHERE nid = #{nid} AND uid = #{uid}
+    </select>
+
+    <select id="getAllRecordDetail" resultType="HashMap">
+        SELECT record.nid, chapter.cid AS record_cid, chapter.chapter_name AS record_chapter_name FROM chapter
+            RIGHT JOIN record ON record.cid = chapter.cid
+        WHERE record.uid = #{uid}
+    </select>
+
+    <select id="getRecordDetail" resultType="HashMap">
+        SELECT chapter.cid AS record_cid, chapter.chapter_name AS record_chapter_name FROM chapter
+        RIGHT JOIN record ON record.cid = chapter.cid
+        WHERE record.nid = #{nid} AND record.uid = #{uid}
+    </select>
+    
+    <delete id="deleteRecord">
+        DELETE FROM record WHERE cid = #{cid} AND uid = #{uid}
+    </delete>
+    
+    <update id="updateRecord">
+        UPDATE record SET cid = #{cid}, time = #{time} WHERE uid = #{uid} AND nid = #{nid}
+    </update>
+
+    <resultMap id="recordResultMap" type="RecordEntity" >
+        <id column="uid" property="uid" jdbcType="INTEGER" />
+        <id column="cid" property="cid" jdbcType="BIGINT" />
+        <result column="nid" property="nid" jdbcType="BIGINT" />
+        <result column="time" property="time" jdbcType="BIGINT" />
+    </resultMap>
+</mapper>
